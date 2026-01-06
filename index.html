@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ（壁自動調整 最終調整版）</title>
+    <title>モンスト反射シミュレータ（最終確定版）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -47,8 +47,8 @@ function updateSliders(width, height) {
     const bMSlider = document.getElementById('bM');
 
     sMSlider.max = width / 2;
-    tMSlider.max = height / 2;
-    bMSlider.max = height / 2;
+    tMSlider.max = height; // 上下の可動域を広げる
+    bMSlider.max = height; // 上下の可動域を広げる
 
     sMSlider.value = m.side;
     tMSlider.value = m.top;
@@ -80,12 +80,12 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
             canvas.height = container.clientHeight;
             canvas.width = img.width * scale;
 
-            // --- 壁の自動計算ロジック（値を最終調整） ---
-            // PCでの実行結果と基準画像を元に、比率を再々調整しました
-            // ★★★★★★★ ここを最終修正しました ★★★★★★★
+            // --- 壁の自動計算ロジック（最終確定版） ---
+            // いただいたプレイ動画を元に算出した最終比率です
+            // ★★★★★★★ ここが最終確定版の比率です ★★★★★★★
             const sideMarginRatio = 0.027;   // 左右の余白の比率 (完璧なため変更なし)
-            const topMarginRatio = 0.103;   // 上部の余白の比率 (より正確な値に更新)
-            const bottomMarginRatio = 0.364;  // 下部の余白の比率 (より正確な値に更新)
+            const topMarginRatio = 0.085;   // 上部の余白の比率 (動画から再算出)
+            const bottomMarginRatio = 0.38;   // 下部の余白の比率 (動画から再算出)
             // ★★★★★★★★★★★★★★★★★★★★★★★★★
 
             m.side = canvas.width * sideMarginRatio;
@@ -103,6 +103,7 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
     };
     reader.readAsDataURL(file);
 });
+
 
 document.getElementById("refBtn").onclick = () => {
     maxRef = maxRef >= 25 ? 5 : maxRef + 5;
