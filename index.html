@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ（壁自動調整機能付き）</title>
+    <title>モンスト反射シミュレータ（壁自動調整 精度向上版）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -41,7 +41,6 @@ const ctx = canvas.getContext("2d");
 let img = null, start = {x:0, y:0}, target = {x:0, y:0}, maxRef = 10, blocks = [], isAddingBlock = false, isDragging = false, isDraggingStart = false;
 let m = { side: 15, top: 120, bottom: 230 };
 
-// ★★★★★★★ 修正点①：スライダーの値を更新するヘルパー関数を追加 ★★★★★★★
 function updateSliders(width, height) {
     const sMSlider = document.getElementById('sM');
     const tMSlider = document.getElementById('tM');
@@ -60,16 +59,12 @@ function init() {
     const container = document.getElementById("canvas-container");
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
-
-    // 初期値もスライダーに反映
     updateSliders(canvas.width, canvas.height);
-
     start = { x: canvas.width / 2, y: canvas.height * 0.7 };
     target = { x: start.x + 50, y: start.y - 100 };
     draw();
 }
 
-// ★★★★★★★ 修正点②：画像の読み込み処理に壁の自動計算機能を追加 ★★★★★★★
 document.getElementById("imgInput").addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -85,20 +80,19 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
             canvas.height = container.clientHeight;
             canvas.width = img.width * scale;
 
-            // --- ここから壁の自動計算 ---
-            // ご提示いただいた画像から算出した、一般的なモンスト画面のプレイエリア比率
-            const sideMarginRatio = 0.027;  // 左右の余白の比率
-            const topMarginRatio = 0.135;   // 上部の余白の比率
-            const bottomMarginRatio = 0.241; // 下部の余白の比率
+            // --- 壁の自動計算ロジック（値を更新） ---
+            // 新しい画像に基づいて算出した、より正確なプレイエリア比率
+            // ★★★★★★★ ここを修正しました ★★★★★★★
+            const sideMarginRatio = 0.027;   // 左右の余白の比率 (変更なし)
+            const topMarginRatio = 0.16;    // 上部の余白の比率 (更新)
+            const bottomMarginRatio = 0.315;  // 下部の余白の比率 (更新)
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★
 
-            // 比率を元に、現在のキャンバスサイズに合わせたマージンをピクセルで計算
             m.side = canvas.width * sideMarginRatio;
             m.top = canvas.height * topMarginRatio;
             m.bottom = canvas.height * bottomMarginRatio;
 
-            // 計算結果をスライダーに反映
             updateSliders(canvas.width, canvas.height);
-            // --- ここまで ---
 
             start = { x: canvas.width / 2, y: canvas.height * 0.7 };
             target = { x: start.x, y: start.y - 100 };
