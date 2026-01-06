@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ（最終決定版）</title>
+    <title>モンスト反射シミュレータ（ブロックサイズ調整機能付き）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -23,6 +23,8 @@
         左右壁: <input type="range" id="sM" min="0"><br>
         上部壁: <input type="range" id="tM" min="0"><br>
         下部壁: <input type="range" id="bM" min="0"><br>
+        <!-- ★★★★★★★ ここにブロックサイズ調整スライダーを追加 ★★★★★★★ -->
+        ブロックサイズ: <input type="range" id="blockSizeSlider" min="20" max="200" value="80"><br>
         <button onclick="blocks=[];draw();" style="margin-top:10px;">🗑 ブロック全消去</button>
     </div>
     <canvas id="canvas"></canvas>
@@ -40,6 +42,8 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 let img = null, start = {x:0, y:0}, target = {x:0, y:0}, maxRef = 10, blocks = [], isAddingBlock = false, isDragging = false, isDraggingStart = false;
 let m = { side: 15, top: 120, bottom: 230 };
+// ★★★★★★★ ブロックサイズを管理する変数を追加 ★★★★★★★
+let blockSize = 80;
 
 function updateSliders(width, height) {
     const sMSlider = document.getElementById('sM');
@@ -80,13 +84,9 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
             canvas.height = container.clientHeight;
             canvas.width = img.width * scale;
 
-            // --- 壁の自動計算ロジック（最終決定版） ---
-            // ユーザーの環境で発生したズレを逆算して補正した最終比率
-            // ★★★★★★★ ここが最終決定版の比率です ★★★★★★★
-            const sideMarginRatio = 0.027;   // 左右の余白の比率 (完璧なため変更なし)
-            const topMarginRatio = 0.118;   // 上部の余白の比率 (最終調整)
-            const bottomMarginRatio = 0.346;  // 下部の余白の比率 (最終調整)
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★
+            const sideMarginRatio = 0.027;
+            const topMarginRatio = 0.118;
+            const bottomMarginRatio = 0.346;
 
             m.side = canvas.width * sideMarginRatio;
             m.top = canvas.height * topMarginRatio;
@@ -120,6 +120,13 @@ document.getElementById("blockBtn").onclick = function() {
     m[id === 'sM' ? 'side' : id === 'tM' ? 'top' : 'bottom'] = parseInt(e.target.value);
     draw();
 });
+
+// ★★★★★★★ ブロックサイズスライダーのイベントリスナーを追加 ★★★★★★★
+document.getElementById('blockSizeSlider').oninput = e => {
+    blockSize = parseInt(e.target.value);
+    // スライダーを動かしただけでは再描画は不要なので、draw()は呼び出さない
+};
+
 
 function drawHex(x, y, size) {
     ctx.beginPath();
@@ -220,7 +227,9 @@ const down = e => {
     isDragging = true;
     const p = getP(e);
     if (isAddingBlock) {
-        blocks.push({ x: p.x - 40, y: p.y - 40, w: 80, h: 80 });
+        // ★★★★★★★ ブロック作成時のサイズと位置計算をblockSize変数で行うように変更 ★★★★★★★
+        const halfSize = blockSize / 2;
+        blocks.push({ x: p.x - halfSize, y: p.y - halfSize, w: blockSize, h: blockSize });
         draw();
     } else if (Math.hypot(p.x - start.x, p.y - start.y) < 40) {
         isDraggingStart = true;
