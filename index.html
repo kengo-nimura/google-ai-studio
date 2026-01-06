@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ 最終安定版（修正版）</title>
+    <title>モンスト反射シミュレータ 最終安定版（再修正版）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -92,6 +92,8 @@ document.getElementById("blockBtn").onclick = function() {
 });
 
 function drawHex(x, y, size) {
+    // この関数は六角形を描画することに専念します。
+    // 呼び出されるたびに独立したパスで描画するため、他の描画に影響を与えません。
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
         ctx.lineTo(x + size * Math.cos(i * Math.PI / 3), y + size * Math.sin(i * Math.PI / 3));
@@ -99,9 +101,12 @@ function drawHex(x, y, size) {
     ctx.closePath();
     ctx.strokeStyle = "#00ffff";
     ctx.lineWidth = 3;
+    // 六角形には点線は不要なので、実線に戻します。
+    ctx.setLineDash([]);
     ctx.stroke();
 }
 
+// 【全体的に修正】描画ロジックを「計算」と「描画」に分離
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -117,8 +122,8 @@ function draw() {
     ctx.strokeStyle = "rgba(0, 150, 255, 0.4)";
     ctx.setLineDash([5, 5]);
     ctx.strokeRect(L, T, R - L, B - T);
-
     ctx.setLineDash([]);
+
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 2;
     blocks.forEach(b => ctx.strokeRect(b.x, b.y, b.w, b.h));
@@ -129,30 +134,24 @@ function draw() {
 
     if (mag > 1) { 
         vx /= mag; vy /= mag;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([8, 4]);
+        
+        // --- ここからが新しいロジック ---
+
+        // ステップ1: 反射計算を行い、頂点座標を配列に保存する
+        const pathPoints = [start]; // 赤いガイド線の頂点を保存する配列
+        const hexPoints = [];      // 六角形を描画する中心点を保存する配列
 
         for (let i = 0; i < maxRef; i++) {
             let t = Infinity;
             let side = ""; 
             let hitBlock = false;
-            // 【修正点①】衝突を検出するための最小距離を定義します。
-            // 0.5 のような大きな値だと、反射直後に近すぎる衝突を検出できず、ガイドが消える原因になります。
             const minDistance = 0.001;
 
-            // 壁判定
-            // 【修正点②】壁との衝突が最も近い衝突候補である場合、hitBlock を明示的に false に設定します。
-            // これにより、ブロックに当たったのか、壁に当たったのかをより確実に判定できます。
             if (vx > 0) { let d = (R - cx) / vx; if (d > minDistance && d < t) { t = d; side = "x"; hitBlock = false; } }
             if (vx < 0) { let d = (L - cx) / vx; if (d > minDistance && d < t) { t = d; side = "x"; hitBlock = false; } }
             if (vy > 0) { let d = (B - cy) / vy; if (d > minDistance && d < t) { t = d; side = "y"; hitBlock = false; } }
             if (vy < 0) { let d = (T - cy) / vy; if (d > minDistance && d < t) { t = d; side = "y"; hitBlock = false; } }
 
-            // ブロック判定
-            // 壁よりもブロックの方が近い場合、t, side, hitBlock の値が上書きされます。
             blocks.forEach(b => {
                 if (vx > 0) { let d = (b.x - cx) / vx; let y = cy + vy * d; if (d > minDistance && d < t && y >= b.y && y <= b.y + b.h) { t = d; side = "x"; hitBlock = true; } }
                 if (vx < 0) { let d = (b.x + b.w - cx) / vx; let y = cy + vy * d; if (d > minDistance && d < t && y >= b.y && y <= b.y + b.h) { t = d; side = "x"; hitBlock = true; } }
@@ -164,15 +163,30 @@ function draw() {
 
             cx += vx * t;
             cy += vy * t;
-            ctx.lineTo(cx, cy);
+            pathPoints.push({x: cx, y: cy}); // 頂点を配列に追加
 
-            if (hitBlock) drawHex(cx, cy, 15);
+            if (hitBlock) {
+                hexPoints.push({x: cx, y: cy}); // 六角形の中心点を配列に追加
+            }
 
             if (side === "x") { vx *= -1; cx += vx * 0.1; } 
             else { vy *= -1; cy += vy * 0.1; }
         }
+
+        // ステップ2: 保存した座標を元に、赤いガイド線を描画する
+        ctx.beginPath();
+        ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+        pathPoints.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 4]);
         ctx.stroke();
+
+        // ステップ3: 保存した座標を元に、六角形を描画する
+        hexPoints.forEach(p => drawHex(p.x, p.y, 15));
     }
+
+    // --- ここまでが新しいロジック ---
 
     ctx.setLineDash([]);
     ctx.beginPath(); ctx.arc(start.x, start.y, 20, 0, Math.PI * 2);
