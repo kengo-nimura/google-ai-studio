@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ（壁自動調整 最終版）</title>
+    <title>モンスト反射シミュレータ（壁自動調整 最終調整版）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -29,7 +29,7 @@
 </div>
 
 <div id="toolbar">
-    <label class="tool-btn"><input type="file" id="imgInput" accept="image/*" style="display=none"><div class="tool-icon">🖼</div>スクショ</label>
+    <label class="tool-btn"><input type="file" id="imgInput" accept="image/*" style="display:none"><div class="tool-icon">🖼</div>スクショ</label>
     <div class="tool-btn" id="blockBtn"><div class="tool-icon">＋</div>ブロック</div>
     <div class="tool-btn" id="refBtn"><div class="tool-icon" id="refNum">10</div>反射数</div>
     <div class="tool-btn" onclick="document.getElementById('settings').classList.toggle('show')"><div class="tool-icon">⚙</div>調整</div>
@@ -80,12 +80,12 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
             canvas.height = container.clientHeight;
             canvas.width = img.width * scale;
 
-            // --- 壁の自動計算ロジック（値を再調整） ---
-            // いただいた新しい基準画像「22_05.png」を元に比率を再調整しました
-            // ★★★★★★★ ここを再修正しました ★★★★★★★
-            const sideMarginRatio = 0.027;   // 左右の余白の比率 (変更なし)
-            const topMarginRatio = 0.065;   // 上部の余白の比率 (大幅に更新)
-            const bottomMarginRatio = 0.355;  // 下部の余白の比率 (更新)
+            // --- 壁の自動計算ロジック（値を最終調整） ---
+            // PCでの実行結果と基準画像を元に、比率を再々調整しました
+            // ★★★★★★★ ここを最終修正しました ★★★★★★★
+            const sideMarginRatio = 0.027;   // 左右の余白の比率 (完璧なため変更なし)
+            const topMarginRatio = 0.103;   // 上部の余白の比率 (より正確な値に更新)
+            const bottomMarginRatio = 0.364;  // 下部の余白の比率 (より正確な値に更新)
             // ★★★★★★★★★★★★★★★★★★★★★★★★★
 
             m.side = canvas.width * sideMarginRatio;
