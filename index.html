@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>モンスト反射シミュレータ 最終安定版（壁反射可視化版）</title>
+    <title>モンスト反射シミュレータ（壁自動調整機能付き）</title>
     <style>
         body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; }
         #canvas-container { flex: 1; position: relative; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -20,9 +20,9 @@
 
 <div id="canvas-container">
     <div id="settings">
-        左右壁: <input type="range" id="sM" min="0" max="100" value="15"><br>
-        上部壁: <input type="range" id="tM" min="0" max="300" value="120"><br>
-        下部壁: <input type="range" id="bM" min="0" max="400" value="230"><br>
+        左右壁: <input type="range" id="sM" min="0"><br>
+        上部壁: <input type="range" id="tM" min="0"><br>
+        下部壁: <input type="range" id="bM" min="0"><br>
         <button onclick="blocks=[];draw();" style="margin-top:10px;">🗑 ブロック全消去</button>
     </div>
     <canvas id="canvas"></canvas>
@@ -41,15 +41,35 @@ const ctx = canvas.getContext("2d");
 let img = null, start = {x:0, y:0}, target = {x:0, y:0}, maxRef = 10, blocks = [], isAddingBlock = false, isDragging = false, isDraggingStart = false;
 let m = { side: 15, top: 120, bottom: 230 };
 
+// ★★★★★★★ 修正点①：スライダーの値を更新するヘルパー関数を追加 ★★★★★★★
+function updateSliders(width, height) {
+    const sMSlider = document.getElementById('sM');
+    const tMSlider = document.getElementById('tM');
+    const bMSlider = document.getElementById('bM');
+
+    sMSlider.max = width / 2;
+    tMSlider.max = height / 2;
+    bMSlider.max = height / 2;
+
+    sMSlider.value = m.side;
+    tMSlider.value = m.top;
+    bMSlider.value = m.bottom;
+}
+
 function init() {
     const container = document.getElementById("canvas-container");
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
+
+    // 初期値もスライダーに反映
+    updateSliders(canvas.width, canvas.height);
+
     start = { x: canvas.width / 2, y: canvas.height * 0.7 };
     target = { x: start.x + 50, y: start.y - 100 };
     draw();
 }
 
+// ★★★★★★★ 修正点②：画像の読み込み処理に壁の自動計算機能を追加 ★★★★★★★
 document.getElementById("imgInput").addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -64,6 +84,21 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
             
             canvas.height = container.clientHeight;
             canvas.width = img.width * scale;
+
+            // --- ここから壁の自動計算 ---
+            // ご提示いただいた画像から算出した、一般的なモンスト画面のプレイエリア比率
+            const sideMarginRatio = 0.027;  // 左右の余白の比率
+            const topMarginRatio = 0.135;   // 上部の余白の比率
+            const bottomMarginRatio = 0.241; // 下部の余白の比率
+
+            // 比率を元に、現在のキャンバスサイズに合わせたマージンをピクセルで計算
+            m.side = canvas.width * sideMarginRatio;
+            m.top = canvas.height * topMarginRatio;
+            m.bottom = canvas.height * bottomMarginRatio;
+
+            // 計算結果をスライダーに反映
+            updateSliders(canvas.width, canvas.height);
+            // --- ここまで ---
 
             start = { x: canvas.width / 2, y: canvas.height * 0.7 };
             target = { x: start.x, y: start.y - 100 };
@@ -157,13 +192,7 @@ function draw() {
             cx += vx * t;
             cy += vy * t;
             pathPoints.push({x: cx, y: cy});
-
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // 【修正点】
-            // これまでは if (hitBlock) { ... } で囲んでいましたが、その条件を削除します。
-            // これにより、壁・ブロックに関わらず、全ての反射点で六角形が描画されます。
             hexPoints.push({x: cx, y: cy}); 
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
             if (side === "x") { vx *= -1; cx += vx * 0.1; } 
             else { vy *= -1; cy += vy * 0.1; }
