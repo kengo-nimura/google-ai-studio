@@ -81,11 +81,11 @@ document.getElementById("imgInput").addEventListener('change', function(e) {
             canvas.width = img.width * scale;
 
             // --- 壁の自動計算ロジック（最終決定版） ---
-            // 基準画像「22_05.png」のピクセル単位の分析に基づく最終比率
+            // 実際のスマホスクリーンショットでのズレを逆算して補正した最終比率
             // ★★★★★★★ ここが最終決定版の比率です ★★★★★★★
-            const sideMarginRatio = 0.027;   // 左右の余白の比率
-            const topMarginRatio = 0.121;   // 上部の余白の比率
-            const bottomMarginRatio = 0.353;  // 下部の余白の比率
+            const sideMarginRatio = 0.027;   // 左右の余白の比率 (完璧なため変更なし)
+            const topMarginRatio = 0.088;   // 上部の余白の比率 (最終調整)
+            const bottomMarginRatio = 0.385;  // 下部の余白の比率 (最終調整)
             // ★★★★★★★★★★★★★★★★★★★★★★★★★
 
             m.side = canvas.width * sideMarginRatio;
